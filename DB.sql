@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Хост: 127.0.0.1:3306
--- Время создания: Дек 07 2021 г., 18:13
+-- Время создания: Апр 10 2022 г., 23:43
 -- Версия сервера: 10.1.44-MariaDB
--- Версия PHP: 7.3.26
+-- Версия PHP: 7.1.33
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -24,6 +24,20 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
+-- Структура таблицы `def_users`
+--
+
+CREATE TABLE `def_users` (
+  `def_usr_id` int(11) NOT NULL,
+  `login` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `password` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `first_name` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `last_name` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Структура таблицы `groups`
 --
 
@@ -34,8 +48,11 @@ CREATE TABLE `groups` (
   `img_id` int(11) DEFAULT NULL COMMENT 'Иконка группы из images',
   `usr_id` int(11) NOT NULL,
   `count_users` int(11) NOT NULL DEFAULT '0',
-  `join_key` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT ''
+  `join_key` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT '',
+  `closed` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Пометка на удаление группы'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
 
 --
 -- Структура таблицы `gtests`
@@ -54,6 +71,8 @@ CREATE TABLE `gtests` (
   `duration_time` int(11) DEFAULT NULL COMMENT 'Отведенное время на тест (в секундах)'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- --------------------------------------------------------
+
 --
 -- Структура таблицы `images`
 --
@@ -65,6 +84,8 @@ CREATE TABLE `images` (
   `type` varchar(16) COLLATE utf8mb4_unicode_ci NOT NULL,
   `size` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
 
 --
 -- Структура таблицы `requests`
@@ -116,6 +137,7 @@ CREATE TABLE `results` (
   `date_created` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `time_end` datetime DEFAULT CURRENT_TIMESTAMP COMMENT 'Дата и время завершения теста',
   `body` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `chronology` text COLLATE utf8mb4_unicode_ci NOT NULL,
   `gr_id` int(11) DEFAULT NULL,
   `ready` tinyint(1) NOT NULL DEFAULT '1'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -159,6 +181,8 @@ CREATE TABLE `tests` (
   `count_responses` int(11) NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- --------------------------------------------------------
+
 --
 -- Структура таблицы `users`
 --
@@ -179,6 +203,13 @@ CREATE TABLE `users` (
 --
 
 --
+-- Индексы таблицы `def_users`
+--
+ALTER TABLE `def_users`
+  ADD PRIMARY KEY (`def_usr_id`),
+  ADD UNIQUE KEY `login` (`login`);
+
+--
 -- Индексы таблицы `groups`
 --
 ALTER TABLE `groups`
@@ -190,7 +221,7 @@ ALTER TABLE `groups`
 --
 ALTER TABLE `gtests`
   ADD PRIMARY KEY (`gt_id`),
-  ADD KEY `gr_id` (`gr_id`);
+  ADD KEY `gtests_ibfk_1` (`gr_id`);
 
 --
 -- Индексы таблицы `images`
@@ -204,7 +235,7 @@ ALTER TABLE `images`
 ALTER TABLE `requests`
   ADD PRIMARY KEY (`req_id`),
   ADD UNIQUE KEY `usr_id` (`usr_id`,`gr_id`),
-  ADD KEY `gr_id` (`gr_id`);
+  ADD KEY `requests_ibfk_1` (`gr_id`);
 
 --
 -- Индексы таблицы `results`
@@ -231,6 +262,12 @@ ALTER TABLE `users`
 --
 -- AUTO_INCREMENT для сохранённых таблиц
 --
+
+--
+-- AUTO_INCREMENT для таблицы `def_users`
+--
+ALTER TABLE `def_users`
+  MODIFY `def_usr_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT для таблицы `groups`
@@ -288,14 +325,14 @@ ALTER TABLE `groups`
 -- Ограничения внешнего ключа таблицы `gtests`
 --
 ALTER TABLE `gtests`
-  ADD CONSTRAINT `gtests_ibfk_1` FOREIGN KEY (`gr_id`) REFERENCES `groups` (`gr_id`);
+  ADD CONSTRAINT `gtests_ibfk_1` FOREIGN KEY (`gr_id`) REFERENCES `groups` (`gr_id`) ON DELETE CASCADE;
 
 --
 -- Ограничения внешнего ключа таблицы `requests`
 --
 ALTER TABLE `requests`
-  ADD CONSTRAINT `requests_ibfk_1` FOREIGN KEY (`gr_id`) REFERENCES `groups` (`gr_id`),
-  ADD CONSTRAINT `requests_ibfk_2` FOREIGN KEY (`usr_id`) REFERENCES `users` (`usr_id`);
+  ADD CONSTRAINT `requests_ibfk_1` FOREIGN KEY (`gr_id`) REFERENCES `groups` (`gr_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `requests_ibfk_2` FOREIGN KEY (`usr_id`) REFERENCES `users` (`usr_id`) ON DELETE CASCADE;
 
 --
 -- Ограничения внешнего ключа таблицы `results`
