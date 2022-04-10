@@ -36,11 +36,11 @@
       </keep-alive>
     </div>
     <div v-if="!isKeepAlive">
-      <div>Hello</div>
       <component :is="Component" :key="$route.path" />
     </div>
     
   </router-view>
+    <NavigatorBottom v-if="!IsWideContent" />
     </main>
     <div class="_part"></div>
   </div>
@@ -54,34 +54,71 @@
     </template>
   </it-modal>
 </div>
+<!-- Выбор изображения: -->
+    <it-modal v-if="ImageSelector" v-model="ImageSelector.$.isOpen">
+      <template #header>
+        <h3 style="margin: 0px">Выбор изображения</h3>
+      </template>
+      <template #body>
+        <ImageSelectorGlob @select="ImageSelector.$.onSelected" @close="ImageSelector.Close()" />
+      </template>
+      <template #actions>
+        <it-button @click="ImageSelector.Close()">Закрыть</it-button>
+        <!-- <it-button :loading="isDeletingGTest" @click="DeleteGTest" type="danger">Удалить</it-button> -->
+      </template>
+    </it-modal>
 </template>
 
 <script>
+import ImageSelectorGlob from "@/components/Menus/ImageSelector";
+import NavigatorBottom from "@/components/NavigatorBottom.vue";
 import Navigat from "../../components/Navigat.vue";
 import Sidebar from "primevue/sidebar";
 import conf from "@/conf.js";
+import {provide, reactive } from '@vue/runtime-core';
 
 export default {
   components: {
     Sidebar,
     Navigat,
+    NavigatorBottom,
+    ImageSelectorGlob,
+  },
+  setup(){
+    const ImageSelector = reactive({
+        $:{
+          isOpen: false,
+          onSelected: ()=>{},
+        },
+        Open(method){ 
+          this.$.isOpen = true; 
+          if(method){this.$.onSelected = method} 
+        },
+        Close(){ this.$.isOpen = false; this.$.onSelected = ()=>{} },
+    });
+    provide('ImageSelector', ImageSelector);
+    return{
+      ImageSelector
+    }
   },
   data() {
     return {
       Main: undefined,
-      keepAlives: ['group', 'mytests', 'myresults'],
+      keepAlives: ['Group', 'Groups', 'MyTests', 'MyResults', 'Home', 'GroupTestBasic', 'TestBasic', 'TestResult', 'TestEditor'],
       ScrollInfo: {},
       IsWideContent: false,
 
       NecessarilyUser: ["MyTests"],
       menuIsActive: false,
       isActive: true,
+      
+      isWindowImageSelector: false,
     };
   },
   computed: {
     isKeepAlive(){
       for(let i = 0; i < this.keepAlives.length; i++){
-        if(this.$route.path.indexOf(this.keepAlives[i] >= 0)){
+        if(this.$route.name == this.keepAlives[i]){
           return true;
         }
       }
@@ -119,15 +156,15 @@ export default {
     ActivatedKeepAlive(){
       if(this.Main)
       for(let i = 0; i < this.keepAlives.length; i++){
-        if(this.$route.path.indexOf(this.keepAlives[i]) >= 0){
-          this.Main.scrollTop = this.ScrollInfo[this.keepAlives[i]]
+        if(this.$route.name == this.keepAlives[i]){
+          this.Main.scrollTop = this.ScrollInfo[this.keepAlives[i]];
         }
       }
     },
     SaveScroll(){
       if(this.isKeepAlive){
         for(let i = 0; i < this.keepAlives.length; i++){
-          if(this.$route.path.indexOf(this.keepAlives[i]) >= 0){
+          if(this.$route.name == this.keepAlives[i]){
             this.ScrollInfo[this.keepAlives[i]] = this.Main.scrollTop;
           }
         }
@@ -138,8 +175,7 @@ export default {
       this.menuIsActive = false;
     },
     enterVK() {
-      document.location =
-        "https://oauth.vk.com/authorize?client_id=7870026&display=page&redirect_uri=http://localhost:8080/auth/vk&scope=offline&response_type=token&v=5.52";
+      document.location = conf.VK_AUTH_URL;
     },
   },
 };
@@ -222,6 +258,11 @@ export default {
 }
 .wide-content-mode .btn-sidebar-menu i{
   display: inline-block !important;
+}
+
+.wide-content-mode .main-grid-center>main{
+  height: auto;
+  min-height: calc( 100vh - 42px);
 }
 
 

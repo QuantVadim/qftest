@@ -601,7 +601,9 @@ function get_all_groups_tests()
 			inner join requests on (requests.gr_id = gtests.gr_id)
 			left join images on tests.ico = images.img_id 
       left join images images_gr on groups.img_id = images_gr.img_id 
+      inner join groups on (groups.gr_id = $table_name.gr_id)
 			where requests.usr_id = :usr_id
+			and groups.closed = false
 			and $table_name.gt_id $sign :point
 			order by $table_name.gt_id $insertDesc limit :count");
 		$q->bindValue('point', $R['point'], PDO::PARAM_INT);
@@ -615,6 +617,7 @@ function get_all_groups_tests()
 			left join images on tests.ico = images.img_id 
       left join images images_gr on groups.img_id = images_gr.img_id 
 			where requests.usr_id = :usr_id
+			and groups.closed = false
 			order by $table_name.gt_id $insertDesc limit :count");
 	}
 	$q->bindValue('usr_id', $ME['usr_id'], PDO::PARAM_INT);
@@ -675,4 +678,93 @@ function set_group_ico(){
   }else{
     $RET = ['error'=>'Изображение не найдено'];
   }
+}
+
+function set_group_info(){
+	global $R, $DB, $ME, $RET;
+
+	$gr_id = $R['gr_id'];
+	$name = trim($R['info']['name']);
+	$description = trim($R['info']['description']);
+	if(mb_strlen($name) > 1){
+		$q = $DB->prepare("SELECT usr_id, gr_id from groups where gr_id = :gr_id limit 1");
+		$q->bindValue("gr_id", (int)$gr_id, PDO::PARAM_INT);
+		$q->execute();
+		if($group = $q->fetch(PDO::FETCH_ASSOC)){
+			if($group['usr_id'] == $ME['usr_id']){
+				$q2 = $DB->prepare("UPDATE groups set name = :name, description = :description where gr_id = :gr_id");
+				BindExecute($q2, [
+					['name', $name, PDO::PARAM_STR], 
+					['description', $description, PDO::PARAM_STR], 
+					['gr_id', $gr_id, PDO::PARAM_INT]]);
+				if( empty($q2->errorInfo()[1]) ){
+					$RET = ['data'=>$gr_id, 'info'=>['name'=>$name, 'description'=>$description]];
+				}
+			}else{
+				$RET = ['error'=>'Нет доступа к группе'];
+			}
+		}
+	}else{
+		$RET = ['error'=>'Название группы должно быть более одного символа'];
+	}
+}
+
+function set_close_group(){
+	global $R, $DB, $ME, $RET;
+
+	$gr_id = $R['gr_id'];
+	$value = $R['value'] == true ? true : false;
+	$q = $DB->prepare("SELECT usr_id, gr_id, closed from groups where gr_id = :gr_id limit 1");
+	$q->bindValue('gr_id', $gr_id, PDO::PARAM_INT);
+	$q->execute();
+	if($group = $q->fetch(PDO::FETCH_ASSOC)){
+		if($ME['usr_id'] == $group['usr_id']){
+			$q2 = $DB->prepare("UPDATE groups set closed = :closed where gr_id = :gr_id and usr_id = :usr_id");
+			BindExecute($q2, [
+				['closed', $value, PDO::PARAM_BOOL],
+				['gr_id', $gr_id, PDO::PARAM_INT],
+				['usr_id', $ME['usr_id'], PDO::PARAM_INT]]);
+			if(empty( $q2->errorInfo()[1] )){
+				$RET = ['data'=>'ok'];
+			}else{
+				$RET = ['error'=>'Ошибка в запросе'];
+			}
+		}else{
+			$RET = ['error'=>'Ошибка доступа'];
+		}
+
+	}else{
+		$RET = ['error'=>'Группа не найдена'];
+	}
+
+}
+
+function delete_group(){
+	global $R, $DB, $ME, $RET;
+
+	$gr_id = $R['gr_id'];
+
+	$q = $DB->prepare("SELECT gr_id, usr_id, closed from groups where gr_id = :gr_id limit 1");
+	$q->bindValue('gr_id', $gr_id, PDO::PARAM_INT);
+	$q->execute();
+	if($group = $q->fetch(PDO::FETCH_ASSOC)){
+		if($group['usr_id'] == $ME['usr_id']){
+			if($group['closed'] == 1){
+				$q2 = $DB->prepare("DELETE from groups where gr_id = :gr_id and usr_id = :usr_id");
+				BindExecute($q2, [['gr_id', $gr_id, PDO::PARAM_INT], ['usr_id', $ME['usr_id'], PDO::PARAM_INT]]);
+				if( empty($q2->errorInfo()[1]) ){
+					$RET = ['data'=>'ok'];
+				}else{
+					$RET = ['error'=>$q2->errorInfo()[2]];
+				}
+			}else{
+				$RET = ['error'=>'Для удаления группы, необходимо сперва ее закрыть'];
+			}
+		}else{
+			$RET = ['error'=>'Ошибка доступа'];
+		}
+	}else{
+		$RET = ['error'=>'Группа не найдена'];
+	}
+
 }

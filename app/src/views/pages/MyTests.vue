@@ -9,6 +9,7 @@
     </it-modal>
     <block>
       <h3>Мои тесты:</h3>
+      <it-button icon="add" @click="$router.push('/test/new/editor')">Создать тест</it-button>
       <Divider />
       <div v-for="(item, index) in items" :key="index">
         <TestCard

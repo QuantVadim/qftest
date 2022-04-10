@@ -7,7 +7,8 @@ export default{
     let list = {
       items: [], //Элементы
       isLoading: false, //Идет ли загрузка данных
-      isMore: true,//Есть ли еще контент для загрузки
+      isMore: true,//Есть ли еще контент для 
+      info: undefined,
       async Load() {
         if (this.isLoading) return false;
         this.isLoading = true;
@@ -17,6 +18,7 @@ export default{
           desc,
           count,
         };
+        if(this.info) obj.info = this.info;
         if (this.items.length > 0)
         obj.point = this.items[this.items.length - 1][colName];
         axios.post(conf.API, obj).then((itm) => {
@@ -50,6 +52,9 @@ export default{
           }
         }
         if(del != undefined) this.items.splice(del, 1);
+      },
+      SetInfo(itm){
+        this.info = itm;
       },
       AddStart(item){
         this.items.splice(0, 0, item);

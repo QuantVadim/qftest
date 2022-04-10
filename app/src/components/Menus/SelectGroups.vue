@@ -1,16 +1,16 @@
 <template>
   <div>
     <div v-for="(item, index) in items" :key="index">
-      <div class="itm-group" @click="item.checked = !item.checked; toCash()">
+      <label class="itm-group" :for="'itmgr_'+item.gr_id">
       <div>
-        <it-checkbox v-model="item.checked" />
+        <it-checkbox v-model="item.checked" :id="'itmgr_'+item.gr_id" @input="toCash" />
       </div>
-      <it-avatar :size="'50px'" square :text="item.name" :src="item?.avatar" />
+      <it-avatar :size="'50px'" :text="item.name" :src="item?.ico_url" />
       <div class="itm-gresult-center">
-        <h3 class="card-test-title"><span @click="goResult">{{ item.name }}</span></h3>
+        <h3 class="card-test-title"><span>{{ item.name }}</span></h3>
         <div class="result-card-score">Участников: {{item.count_users }}</div>
       </div>
-    </div>
+    </label>
     <it-divider/>
     </div>
     <it-button @click="Load" :loading="isLoading" v-if="isButtonLoad" block
@@ -32,12 +32,15 @@ export default {
   },
   methods:{
     toCash(){
-      this.$emit('cash', this.items);
-      let list = [];
-      this.items.forEach(element => {
-        if(element?.checked == true) list.splice(0, 0, element.gr_id)
-      });
-      this.$emit('change', list);
+      setTimeout(()=>{
+        this.$emit('cash', this.items);
+        let list = [];
+        this.items.forEach(element => {
+          if(element?.checked == true) list.splice(0, 0, element.gr_id)
+        });
+        this.$emit('change', list);
+      }, 0);
+      
     },
     async Load() {
       if (this.isLoading) return false;

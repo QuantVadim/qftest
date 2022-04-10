@@ -1,11 +1,12 @@
 <template>
   <div>
     <!--Окно просмотра результатов -->
-    <it-modal v-model="isOpen">
+    <it-modal v-model="val">
       <template #header
-        ><h3 class="modal-header">{{ data.name }}</h3></template
+        ><h3 class="modal-header">{{ data?.name }}</h3></template
       >
       <template #body>
+        <div>
         <it-button
           class="btn-update"
           icon="update"
@@ -14,7 +15,7 @@
           text
           >Обновить</it-button
         >
-        <div v-for="(item, index) in items" :key="index">
+        <div v-for="(item, index) in items" :key="index" >
           <ResultCard :data="item" @delete="toDeleteResult" :index="index" />
           <Divider />
         </div>
@@ -27,6 +28,7 @@
         <it-button @click="Load" :loading="isLoading" v-if="isButtonLoad" block
           >Еще</it-button
         >
+        </div>
       </template>
       <template #actions>
         <it-button @click="setEnable(false)">Закрыть</it-button>
@@ -63,13 +65,15 @@ export default {
     Divider,
     ResultCard,
   },
-  props: ["data"],
+  props: ['modelValue', "data"],
   data() {
     return {
+      val: false,
       items: [],
       isLoading: false,
       isButtonLoad: true,
       isOpen: true,
+      gt_id_last: undefined,
 
       isWinDelResult: false,
       curDelResult: undefined,
@@ -78,9 +82,7 @@ export default {
     };
   },
   mounted() {
-    setTimeout(() => {
-      this.Load();
-    }, 0);
+    this.val = this.modelValue;
   },
   methods: {
     toDeleteResult(data, index) {
@@ -158,6 +160,20 @@ export default {
     },
   },
   watch: {
+    modelValue(val){
+      this.val = val;
+    },
+    val(val){
+      if(val){
+        setTimeout(() => {
+          if(this.data.gt_id != this.gt_id_last)
+            this.updateList();
+        }, 0);
+      }else{
+        this.gt_id_last = this?.data?.gt_id;
+      }
+      this.$emit('update:modelValue', val);
+    },
     isOpen() {
       this.setEnable(this.isOpen);
     },

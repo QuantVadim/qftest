@@ -33,7 +33,8 @@ function get_user(){
 
 function get_images(){
     global $R, $DB, $ME, $RET;
-    $RET = GetAutoList("SELECT * from images where usr_id = :usr_id", 'images', 'img_id');
+    $type = isset($R['info']['type']) ? $R['info']['type'] : 'img';
+    $RET = GetAutoList("SELECT * from images where usr_id = :usr_id and type = :type", 'images', 'img_id', [['type', $type, PDO::PARAM_STR]]);
     for ($i=0; $i < count($RET['data']); $i++) { 
         $RET['data'][$i]['url'] = LINK.'/uploaded/'.$RET['data'][$i]['url'];
     }

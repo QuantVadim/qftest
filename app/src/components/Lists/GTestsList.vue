@@ -1,7 +1,7 @@
 <template>
   <div>
     <GResultsViewer
-      v-if="isWinResults"
+      v-model="isWinResults"
       :data="curDataResults"
       @set-enable="WinShowResults"
     />

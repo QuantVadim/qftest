@@ -3,7 +3,7 @@
     <div v-if="dt != undefined">
       <div></div>
       <pre>{{ dt.text }}</pre>
-      <div class="line-word">
+      <div class="line-word" v-if="dt?.correct">
         <span v-for="(item, index) in dt.word" 
           :key="index"
           :class="{'letter-glas':isGlas(item), 
@@ -42,7 +42,9 @@ export default {
     this.dt.text = this.data?.text ? this.data.text : '';
     this.dt.word = this.data?.word ? this.data.word : '';
     this.dt.score = this.data.score ? this.data.score : 0;
-
+    if(this.data?.correct == undefined){
+      this.dt.correct = this.data.word;
+    }
   },
   methods: {
     isGlas(char){

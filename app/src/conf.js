@@ -7,7 +7,7 @@ export default Object({
   WidePages: ['/test/', '/gtest/', '/result/'], // Широкие страницы без меню навигации
 });
 
-//Для хостинга:
+// Для хостинга:
 // export default Object({
 //   API: 'https://t.myqf.ru/backend/api/main.php',
 //   UPLOAD_IMG_URL: "https://t.myqf.ru/backend/upload.php", //Скрипт загрузки изображений

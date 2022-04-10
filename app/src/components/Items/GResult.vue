@@ -24,7 +24,7 @@
       </div>
       <div>
         <Knob v-if="data.ready == 1" v-model="score" :min="0" :max="100" :size="50" :valueTemplate="score+'%'" readonly />
-        <span v-else><i class="pi pi-pencil pencil-writing" style="font-size: 30px; padding: 10px"></i></span>
+        <span v-else><div class="pencil-writing" style=" padding: 10px"></div></span>
       </div>
     </div>
   </div>
@@ -61,6 +61,11 @@ export default {
       ],
     }
   },
+  watch:{
+    score(){
+      this.score = Math.floor((+this.data.score/+this.data.max_score)*100);
+    }
+  },
   computed: {
     user_name(){
       if(this.data?.user_name){
@@ -83,6 +88,9 @@ export default {
       //this.$emit('open-result', this.data.res_id);
       //window.open(`/result/${this.data.res_id}`, '_blank');
     }
+  },
+  renderTracked(){
+    this.score = Math.floor((+this.data.score/+this.data.max_score)*100);
   }
 
 }

@@ -44,6 +44,9 @@ export default {
 
   },
   methods: {
+    ChangeState(){
+      this.$emit('change-card-state', this.dt);
+    },
     isGlas(char){
       return this.glas.indexOf(char.toLowerCase()) >= 0 ? true : false;
     },
@@ -57,6 +60,7 @@ export default {
         let w = this.dt.word;
         this.dt.word = w.substr(0, index)+char+w.substr(index+1); 
       }
+      this.ChangeState();
     } 
 
   },

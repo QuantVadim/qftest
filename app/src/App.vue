@@ -1,26 +1,27 @@
 <template>
-<div>
+<div v-if="isReady">
   <component v-if="$store.state.ME.data?.usr_id || layout == 'empty-layout'" :is="layout"></component>
   <div v-else-if="isUserLoading && !$store.state.ME.data?.usr_id">
     <div class="center"><it-loading/></div>
   </div>
   <div v-else>
     <block class="center window-login">
-      <br>
-      <div>Необходимо выполнить вход</div><br>
-      <it-button block :type="'primary'" class='h-enter-vk' @click="enterVK">Войти через Вконтакте</it-button>
+      <LoginForm />
     </block>
   </div>
 </div>
 </template>
 
-
 <script>
 import EmptyLayout from './views/layouts/EmptyLayout';
 import MainLayout from './views/layouts/MainLayout';
 import Block from './components/Block';
+import LoginForm from '@/components/Units/LoginForm';
 
 export default {
+  components:{
+    EmptyLayout, MainLayout, Block, LoginForm
+  },
   computed:{
     layout(){
       return (this.$route.meta?.layout || 'empty')+'-layout';
@@ -28,6 +29,7 @@ export default {
   },
   data(){
     return{
+      isReady: false,
       isUserLoading: true,
     }
   },
@@ -35,14 +37,12 @@ export default {
     await this.$store.dispatch('LOAD_USER');
     this.isUserLoading = false;
   },
+  created(){
+    this.isReady = true;
+  },
   methods:{
    // ...mapActions(['LOAD_USER']),
-   enterVK(){
-        document.location = this.conf.VK_AUTH_URL;
-    }
-  },
-  components:{
-    EmptyLayout, MainLayout, Block
+   
   }
 }
 </script>
@@ -86,10 +86,6 @@ pre{
   width: 300px;
   margin: auto;
   margin-top: 60px;
-}
-.h-enter-vk{
-display: block;
-height: 41px;
 }
 .center{
   text-align: center;

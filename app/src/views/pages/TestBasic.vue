@@ -7,7 +7,7 @@
           <div  v-if="info?.group" class="group-info" 
             @click="$router.push(`/group/${info?.group.gr_id}`)" >
             <div class="user-item-row">
-            <it-avatar :src="info?.group.user_avatar" />
+            <it-avatar :src="info?.group.ico_url" />
             <div class="user-name">
               <h3>{{ info?.group.group_name }}</h3>
             </div>
@@ -94,11 +94,11 @@
       </block>
       <!-- /Шапка теста -->
       <BlockUI :blocked="secondsLeft <= 0"> 
-        <TestQuests :data="test.body" :mode="'basic'" />
+        <TestQuests :data="test.body" :mode="'basic'" @change-card-state="ChangeCardState" />
       </BlockUI>
       <block style="text-align: center">
-        <Button icon="pi pi-check" @click="SendTest" label="Отправить" />
-        <span v-if="test?.res_id" style="margin-left: 5px">
+        <Button icon="pi pi-check" @click="SendTest" :loading="isSendingTest" label="Отправить" />
+        <span v-if="test?.res_id && isTimeOver == false" style="margin-left: 5px">
           <Button icon="pi pi-save" @click="SaveResult" :loading="isResultSaving" label="Сохранить" />
         </span>
         
@@ -115,6 +115,7 @@
     </block>
   </div>
 </template>
+
 
 <script>
 import TestQuests from "../../components/TestQuests";
@@ -134,55 +135,74 @@ export default {
     return {
       isLoading: false,
       isResultSaving: false,
+      isSendingTest: false,
       info: undefined,
       test: undefined,
       timeLeft: undefined,
       secondsLeft: undefined,
       timeInterval: undefined,
       saveTestSeconds: 60,
+      isTimeOver: false, //Время на решение теста закончилось (показ кнопки сохранения)
+      TestState: undefined, //Бэкап теста при завершении таймера
+
+      lastCardChangedEvent: undefined, //последее состояние измененяемой карты
+      allEvents: [],
     };
   },
   methods:{
+    ChangeCardState(data){
+      this.GeneralEvent('cardChange', data);
+      console.log(data);
+    },
     getNormalDate,
     startTimer(){
-      if(this.test?.duration_time){
+      if(this?.test?.gr_id != undefined){
         this.computeTimeLeft();
         if(this?.timeInterval != undefined){
           clearInterval(this.timeInterval);
           console.log('clearInterval');
         }
-        this.timeInterval = this.test?.duration_time ? setInterval(()=>{this.computeTimeLeft()}, 1000) : undefined; //Установа счетчика времени
+        this.timeInterval = this.test?.gr_id != undefined ? setInterval(()=>{this.computeTimeLeft()}, 1000) : undefined; //Установа счетчика времени
       }
     },
     computeTimeLeft(){
       console.log('Секунда');
-      if(this.test && this?.test?.duration_time && this?.test?.date_created){
+      if(this?.test && this?.test?.duration_time && this?.test?.date_created){
         let tc = new Date();
         let ti = new Date( Date.parse(this?.test?.date_created) );
         let sec = this?.test?.duration_time*60 - Math.floor((tc - ti)/1000);
         this.saveTestSeconds--;
         this.secondsLeft = sec;
         this.timeLeft = (sec/60 >=1 ? Math.floor(sec/60) +"м. ": '')+(sec%60+'c.');
-        if(this.saveTestSeconds == 0){
+        if(this.saveTestSeconds <= 0){
           this.saveTestSeconds = 60;
           this.SaveResult();
         }
         if(sec <= 0){
+          this.isTimeOver = true;
           this.SendTest();
           clearInterval(this.timeInterval);
         }
-
+      }else if(this?.test && this?.test?.date_created){
+        this.saveTestSeconds--;
+        if(this.saveTestSeconds <= 0){
+          this.saveTestSeconds = 60;
+          this.SaveResult();
+        }
       }
     },
     async SaveResult(){
       this.isResultSaving = true;
+      this.GeneralEvent();
       let obj = {
         q: 'save_gtest_result',
         me: this.getUser(),
         test: this.test,
+        events: this.allEvents,
       }
       this.axios.post(this.apiurl, obj).then(itm => {
         this.isResultSaving = false;
+        this.allEvents = [];
         console.log(itm.data);
         if(itm.data?.data){
           console.log('Сохранил тест');
@@ -195,15 +215,32 @@ export default {
       });
     },
     async SendTest(){
+      this.isSendingTest = true;
+      this.GeneralEvent();
+      let sendingTest = this.test;
+      if(this.isTimeOver && this.TestState == undefined){//сохранить состояние теста в TestState, если время решения закончено и состояние еще не сохранено
+        this.TestState = JSON.parse(JSON.stringify(this.test));
+        console.log('Сохранено состояние теста');
+      }else if(this.TestState != undefined){//При вовторной отправки, если есть сохраненное сосояние, то отправить его
+        sendingTest = this.TestState;
+        console.log('Отрправлено сохраненное ранее состояние теста');
+      }
       let obj = {
         q: 'test_send',
         me: this.getUser(),
-        test: this.test,
+        test: sendingTest,
+        events: this.allEvents,
       }
       this.axios.post(this.apiurl, obj).then(itm => {
+        this.isSendingTest = false;
         console.log(itm.data);
         if(itm.data?.data){
           let test_id = itm.data?.data;
+          this.allEvents = [];
+          if(this?.timeInterval != undefined){
+            clearInterval(this.timeInterval);
+            console.log('clearInterval');
+          }
           this.$router.replace({path: `/result/${test_id}`});
         }else if(itm.data?.error){
           this.$error("Ошибка отправки теста", itm.data?.error);
@@ -211,6 +248,7 @@ export default {
            this.$error("Ошибка отправки теста", "Неизвестная ошибка");
         }
       }).catch(()=>{
+        this.isSendingTest = false;
         this.$error("Ошибка отправки теста", "Отсутствует соединение");
       });
     },
@@ -250,10 +288,70 @@ export default {
         if(itm.data?.data){
           this.test = itm.data.data;
           this.startTimer();
+          this.GeneralEvent('load');
         }else if(itm.data?.error){
           this.$error("Ошибка загрузки теста", itm.data?.error);
         }
       });
+    },
+    GeneralEvent(name, state){
+      if(this.test == undefined || this.isTimeOver) return false;
+      if(name == undefined){
+        if(this.lastCardChangedEvent != undefined){
+          this.lastCardChangedEvent.state = JSON.parse(JSON.stringify(this.lastCardChangedEvent.state));
+          this.allEvents.push(this.lastCardChangedEvent);
+          this.lastCardChangedEvent = undefined;
+          return false;
+        }
+      }
+      let time = new Date();
+      let obj = {
+        name: name,
+        time: time.getTime(),
+      }
+      if(name == 'cardChange' && state != undefined){
+        obj.state = state;
+        obj.cardId = state.id;
+        
+        if(this.lastCardChangedEvent?.cardId == state.id){
+            this.lastCardChangedEvent = obj;
+        }else{
+          if(this.lastCardChangedEvent != undefined){
+            this.lastCardChangedEvent.state = JSON.parse(JSON.stringify(this.lastCardChangedEvent.state));
+            this.allEvents.push(this.lastCardChangedEvent);
+          }
+          this.lastCardChangedEvent = obj;
+        }
+      }else{
+        if(this.lastCardChangedEvent != undefined){
+          this.lastCardChangedEvent.state = JSON.parse(JSON.stringify(this.lastCardChangedEvent.state));
+          this.allEvents.push(this.lastCardChangedEvent);
+          this.lastCardChangedEvent = undefined;
+        }
+        this.allEvents.push(obj);
+      }
+
+    },
+    OnBlur(){//Потеря активности страницы
+      this.GeneralEvent('blur')
+    },
+    OnFocus(){//Возврат активности страницы
+      this.GeneralEvent('focus')
+    }
+  },
+  activated(){
+    window.addEventListener('blur', this.OnBlur);
+    window.addEventListener('focus', this.OnFocus);
+  },
+  deactivated(){
+    window.removeEventListener('blur', this.OnBlur);
+    window.removeEventListener('focus', this.OnFocus);
+  },
+  beforeUnmount(){
+    if(this?.test?.gr_id && (this?.test?.duration_time != undefined && this.secondsLeft > 0)){
+      this.SaveResult();
+    }else if(this?.test?.gr_id && this?.test?.duration_time == undefined){
+      this.SaveResult();
     }
   },
   unmounted(){
@@ -261,6 +359,7 @@ export default {
       clearInterval(this.timeInterval);
       console.log('clearInterval');
     }
+    console.log('Неактивно!');
   },
   created(){
     this.LoadInfo();

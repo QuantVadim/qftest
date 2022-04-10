@@ -2,7 +2,7 @@
   <div v-if="data">
     <div>
       <div class="itm-test-main-info">
-        <it-avatar square size="45px" :text="data.name" />
+        <it-avatar square size="48px" :text="data.name" :src="data?.ico_url" />
         <h3 class="card-test-title">
           <span>{{ data.name }}</span>
         </h3>
@@ -58,6 +58,7 @@ export default {
     },
     toCashSettings(data){
       this.cashSettings = data;
+      
     },
     toCashGroups(data){
       this.cashGroups = data;

@@ -92,6 +92,9 @@ switch($R['q']){
     case 'set_group_ico' : set_group_ico(); break;
     case 'get_test_info' : get_test_info(); break;
     case 'save_gtest_result' : save_gtest_result(); break;
+    case 'set_group_info' : set_group_info(); break;
+    case 'set_close_group' : set_close_group(); break;
+    case 'delete_group' : delete_group(); break;
     default:
 
     break;

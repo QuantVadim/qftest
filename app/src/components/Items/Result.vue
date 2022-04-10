@@ -9,12 +9,15 @@
         </div>
       </div>
     </div>
-    <div class="card-result-body">
+    <div class="card-result-body" @click="goResult">
       
       <div class="itm-result-center">
-        <it-avatar square  size="50px" :src="data.ico_url" :text="data.name" />
+        <div>
+          <it-avatar square size="56px" :src="data.ico_url" :text="data.name" />
+          <it-avatar v-if="data?.gr_id" size="30px" class="group-avatar" :src="data.group_ico_url" :text="data.name" @click.stop="goGroup" :title="data.group_name" />
+        </div>
         
-        <h3 class="card-test-title"><span @click="goResult">{{ data.name }}</span></h3>
+        <h3 class="card-test-title"><span >{{ data.name }}</span></h3>
         <span v-if="data?.description?.length" class="card-description">
           <pre>{{ data.description}}</pre>
         </span>
@@ -25,7 +28,7 @@
             <div class="result-card-score">{{ data.score+"/"+data.max_score }}</div>
          </span>
         <span v-else>
-          <i class="pi pi-pencil pencil-writing" style="font-size: 30px; padding: 10px"></i>
+          <div class="pencil-writing" style=" padding: 10px"></div>
         </span>
       </div>
     </div>
@@ -84,6 +87,11 @@ export default {
     toggle(event) {
       this.$refs.menu.toggle(event);
     },
+    goGroup(){
+      if(this.data.gr_id != null){
+        this.$router.push(`/group/${this.data.gr_id}`);
+      }
+    },
     goTest(){
       if(this.data.gr_id != null){
         this.$router.push(`/gtest/${this.data.ref_test_id}`);
@@ -108,37 +116,18 @@ export default {
 }
 </script>
 
-<style>
-@keyframes pencil-writing{
-  0%{
-    transform: translateX(-5px) rotateZ( -5deg );
-  }
-  15%{
-    transform: rotateZ( 5deg );
-  }
-  35%{
-    transform: rotateZ( -5deg );
-  }
-  50%{
-    transform: translateX(5px) rotateZ( 5deg );
-  }
-  65%{
-     transform: rotateZ( -5deg );
-  }
-  85%{
-     transform: rotateZ( 5deg );
-  }
-  100%{
-    transform: translateX(-5px) rotateZ( -5deg );
-  }
-}
-
-.pencil-writing{
-  animation: 2s pencil-writing infinite ;
-}
-</style>
-
 <style scoped>
+.group-avatar{
+  margin-left: -70px;
+  margin-top: 30px;
+  outline: 3px solid white;
+  transition: transform 0.2s;
+  cursor: pointer;
+}
+.group-avatar:hover{
+  transform: scale(1.6) translate( 6px, -6px )
+}
+
 .p-knob.p-component{
   height: 45px;
   display: flex;
@@ -157,8 +146,9 @@ export default {
 .card-result-body{
   display: grid;
   grid-template-columns: 1fr auto;
+  cursor: pointer;
 }
-.card-test-title span:hover{
+.card-result-body:hover .card-test-title span{
   cursor: pointer;
   text-decoration: underline;
   text-underline-offset: 2px;

@@ -6,7 +6,7 @@
           <div  v-if="test?.group" class="group-info" 
             @click="$router.push(`/group/${test?.group.gr_id}`)" >
             <div class="user-item-row">
-            <it-avatar :src="test?.group.user_avatar" />
+            <it-avatar :src="test?.group.ico_url" />
             <div class="user-name">
               <h3>{{ test?.group.group_name }}</h3>
             </div>
@@ -48,8 +48,19 @@
         </div>
         
         <div>Баллы: {{ test.score }} из {{ test.max_score }}</div>
+
+        <it-toggle
+          v-if="test?.chronology?.length > 0"
+          v-model="resultMode"
+          :options="['Ответы', 'Хронология']"
+        />
       </block>
-      <TestQuests :data="test.body" :mode="'result'" />
+      <div v-show="resultMode == 'Ответы'">
+        <TestQuests :data="test.body" :mode="'result'" />
+      </div>
+      <div v-show="resultMode == 'Хронология'">
+        <ChronologyView :data="test.chronology" />
+      </div>
     </div>
     <div v-else class="center-loading">
       <it-loading></it-loading><br />
@@ -69,11 +80,12 @@
 
 <script>
 import TestQuests from "../../components/TestQuests";
+import ChronologyView from "@/components/ChronologyView";
 
 export default {
   props: ["set-res-id"],
   components: {
-    TestQuests,
+    TestQuests, ChronologyView,
   },
   computed: {
     MYID() {
@@ -84,6 +96,7 @@ export default {
     return {
       res_id: this?.setResId ? this.setResId : this.$route.params.id,
       test: undefined,
+      resultMode: 'Ответы',
     };
   },
   methods: {

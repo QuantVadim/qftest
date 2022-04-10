@@ -77,6 +77,9 @@ export default {
     this.$emit('activated');
   },
   methods: {
+    SelectedImage(itm){
+      console.log(itm);
+    },
     CreateGroup() {
       if (this.newGroup.name.trim().length > 1) {
         let obj = {
@@ -89,8 +92,15 @@ export default {
           console.log(itm.data);
           if (itm.data?.data) {
             this.$router.push(`/group/${itm.data.data}`);
+            this.isWindowCreateGroup = false;
+            this.newGroup.name = "";
+            this.newGroup.description = "";
+          }else{
+            this.$error("Ошибка создания группы", itm.data?.error ?? "Неизвестная ошибка");
           }
-        });
+        }).catch(()=>{
+          this.$error("Ошибка создания группы", "Ошибка с соединением");
+        })
       }
     },
 

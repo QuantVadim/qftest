@@ -41,7 +41,7 @@
 import conf from "@/conf.js";
 import List from "@/others/ListManager";
 export default {
-  props: [],
+  props: ['imgType'],
   data() {
     return {
       SelectedImage: undefined,
@@ -53,6 +53,7 @@ export default {
     };
   },
   mounted(){
+    this.list.SetInfo({type: this.imgType || 'img'});
     this.list.Load();
     console.log(this.list);
   },
@@ -66,14 +67,21 @@ export default {
           "info",
           JSON.stringify({
             me: this.$store.state.ME.data,
-            type: 'ico',
+            type: this.imgType || 'img',
           })
         );
         console.log(event.target.files);
         this.axios.post(conf.UPLOAD_IMG_URL, fd).then((itm) => {
+          if(itm.data?.error){
+            this.$error('Ошибка загрузки изображения', itm.data.error);
+          }else{
+            this.list.AddStart(itm.data);
+            console.log(itm.data);
+          }
           this.isUploadingImage = false;
-          this.list.AddStart(itm.data);
-          console.log(itm.data);
+        }).catch(()=>{
+          this.isUploadingImage = false;
+          this.$error('Ошибка загрузки изображения', 'Проблемы с сетью');
         });
       }
     },

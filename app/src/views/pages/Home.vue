@@ -46,6 +46,9 @@ export default {
       isButtonLoad: true,
     };
   },
+  activated(){
+    this.$emit('activated');
+  },
   mounted() {
     if (this?.data) {
       this.items = this.data;
